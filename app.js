@@ -28,26 +28,16 @@ initializeDbAndServer();
 
 const convertDbObjToResponseObj = (DbObj) => {
   return {
-    PlayerId: DbObj.player_id,
+    playerId: DbObj.player_id,
     playerName: DbObj.player_name,
   };
 };
 
 const convertDbObjToMatchObj = (DBObj) => {
   return {
-    MatchId: DBObj.match_id,
+    matchId: DBObj.match_id,
     match: DBObj.match,
     year: DBObj.year,
-  };
-};
-
-const convertObj = (DbObj) => {
-  return {
-    playerId: DbObj.player_id,
-    playerName: DbObj.player_name,
-    totalScore: DbObj.total,
-    totalFours: DbObj.fours,
-    totalSixes: DbObj.sixes,
   };
 };
 
@@ -111,12 +101,17 @@ app.get("/matches/:matchId/players", async (request, response) => {
 //API 7
 app.get("/players/:playerId/playerScores", async (request, response) => {
   const { playerId } = request.params;
-  const getPlayerMatchQuery = `SELECT player_details.player_id, player_details.player_name, 
-  SUM(player_match_score.score) as total, SUM(player_match_score.fours) as fours, sum(player_match_score.sixes) as sixes
-  FROM player_details INNER JOIN player_match_score
-  ON player_details.player_id = player_match_score.player_id WHERE
-  player_match_score.player_id = ${playerId};`;
-  const playerArray = await database.all(getPlayerMatchQuery);
-  response.send(convertObj(playerArray));
+  const getPlayerMatchQuery = `SELECT
+      player_id AS playerId,
+      player_name AS playerName,
+      SUM(score) AS totalScore,
+      SUM(fours) AS totalFours,
+      SUM(sixes) AS totalSixes
+    FROM player_match_score
+      NATURAL JOIN player_details
+    WHERE
+      player_id = ${playerId};`;
+  const playerArray = await database.get(getPlayerMatchQuery);
+  response.send(playerArray);
 });
 module.exports = app;
